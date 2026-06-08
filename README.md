@@ -1,10 +1,8 @@
 # Telegram reaction commands for Hermes
 
-A small experiment for using Telegram reactions as lightweight commands for Hermes Agent.
+Telegram reactions as lightweight commands for Hermes Agent.
 
 The idea is simple: instead of replying "check this", "rewrite it", or "approve", you react to the assistant message with an emoji. Hermes can then turn that reaction into a scoped instruction for that exact message.
-
-This is not an official Hermes Agent project. It is not a pull request against Hermes core. It is a standalone prototype for a funny but useful interaction pattern.
 
 ## Example mapping
 
@@ -120,5 +118,3 @@ If Hermes exposes the needed Telegram reaction plugin hook, installation could e
 hermes plugins install https://github.com/Visiterius/hermes-telegram-reaction-commands
 hermes gateway restart
 ```
-
-For now, this repo is just the standalone prototype for the idea.
