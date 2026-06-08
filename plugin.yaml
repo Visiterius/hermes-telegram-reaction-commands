@@ -1,0 +1,15 @@
+name: telegram-reaction-commands
+version: 0.1.0
+description: Independent community prototype for mapping Telegram message reactions to scoped Hermes Agent commands.
+author: Visiterius
+license: MIT
+status: prototype
+not_official_hermes_plugin: true
+requires_future_hooks:
+  - telegram:reaction
+commands:
+  - setup
+  - delete
+notes:
+  - Current Hermes may need a small gateway event bridge before telegram:reaction can be emitted to standalone plugins.
+  - Approval/proceed reactions must be hard-scoped to exact pending actions for the reacted assistant message.

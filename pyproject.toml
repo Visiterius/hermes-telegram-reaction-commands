@@ -1,0 +1,12 @@
+[project]
+name = "hermes-telegram-reaction-commands"
+version = "0.1.0"
+description = "Independent prototype for mapping Telegram reactions to scoped Hermes Agent commands"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+authors = [{ name = "Visiterius" }]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
