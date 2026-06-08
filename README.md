@@ -1,74 +1,81 @@
-# Telegram Reaction Commands for Hermes
+# Telegram reaction commands for Hermes
 
-Independent community plugin/prototype for mapping Telegram message reactions to scoped Hermes Agent commands.
+A small experiment for using Telegram reactions as lightweight commands for Hermes Agent.
 
+The idea is simple: instead of replying "check this", "rewrite it", or "approve", you react to the assistant message with an emoji. Hermes can then turn that reaction into a scoped instruction for that exact message.
 
-## What it does
+This is not an official Hermes Agent project. It is not a pull request against Hermes core. It is a standalone prototype for a funny but useful interaction pattern.
 
-A Telegram user reacts to an assistant message, and the reaction is resolved into a structured command/action.
+## Example mapping
 
-Safe default shortcuts use only reactions that were visible in the Telegram reaction picker during testing:
+These are the shortcuts I tested because they were available in Telegram's reaction picker:
 
-- `💯` = approve/proceed only for the exact reacted assistant message when it has an active pending action attached.
-- `🤓` = research the reacted answer or claim deeper.
-- `👀` = verify/check current status with tools where possible.
-- `✍️` = rewrite or clean up the reacted answer into a clearer, shorter version.
-- `💅` = polish wording, structure, and presentation.
-- `🤔` = critique assumptions, risks, missing details, or weak logic.
-- `👨‍💻` = inspect or improve code/dev implementation details.
+- `👀` means check or verify the reacted message.
+- `✍️` means rewrite or clean it up.
+- `💅` means polish the wording/presentation.
+- `🤔` means critique the logic or assumptions.
+- `🤓` means research the claim more deeply.
+- `👨‍💻` means inspect or improve code-related details.
+- `💯` means approve, but only when the reacted message has an exact pending action attached.
 
-## Important Telegram constraint
+The mapping does not have to stay like this. The useful part is the pattern: quick reactions become message-scoped commands.
 
-Telegram reactions are **not arbitrary emojis**. Users can only pick from the reaction set exposed by Telegram for that chat/account. Premium/custom reactions may be locked or unavailable.
+## Current state
 
-Known-unavailable for this test flow: `🧹` and `🔁`. They are good concepts, but they are not usable shortcuts if Telegram does not expose them as message reactions.
+This repo contains the routing and safety logic for a future Hermes plugin, plus tests around the behavior.
 
-## Current status
+It is not a drop-in production plugin yet. Hermes still needs a bridge/hook that passes Telegram `MessageReactionUpdated` events from the gateway into plugin code. Until that exists, this repository is best treated as a prototype/reference implementation.
 
-This is currently a **standalone plugin/prototype package**, not a fully installable Hermes production plugin yet.
+## Telegram limitation
 
-Reason: Hermes Telegram gateway currently needs a core bridge/hook that emits raw Telegram `MessageReactionUpdated` events to plugins. Until that hook exists, this repo provides the tested command-routing, setup-flow, config-storage, and safety logic that such a plugin would use.
+Telegram reactions are not arbitrary emojis. A user can only pick from the reactions Telegram exposes for that chat/account. Premium or custom reactions may not be available.
 
-## Safety model
+During testing, `🧹` and `🔁` were not usable as normal reactions, so they are not in the default map.
 
-- Only authorized Telegram users should configure or trigger reactions.
-- Reaction actions are scoped to the message being reacted to.
-- `approve/proceed` reactions must only work against a stored pending-action ID for the exact target message.
-- Dangerous/destructive actions still require stronger confirmation unless Hermes core approval already allows them.
-- Reaction removal does not undo already executed actions.
-- Reactions to old/untracked messages are ignored or return a short notice.
+## Safety notes
 
-## Prototype UX target
+Reaction commands should stay narrow. A reaction is a convenient shortcut, not a general permission system.
 
-### `/setup`
+Current safety assumptions:
 
-1. Detect Telegram gateway context.
-2. Show numbered available/default reaction list.
-3. For each reaction, ask the user to type its meaning.
-4. Store raw user meanings temporarily.
-5. Ask Hermes/LLM to refactor/polish the raw meanings into safe, clear command prompts.
-6. Show the proposed mapping back to the user.
-7. Require explicit approval before activation.
-8. On approval, write plugin config and send a glitch-style greeting.
+- Only authorized Telegram users should be allowed to configure or trigger reaction commands.
+- A reaction applies to the assistant message it was attached to.
+- Approval reactions require a matching pending action ID for that exact message.
+- Old or unknown messages should be ignored or get a short "nothing to do" response.
+- Removing a reaction does not undo work that already ran.
+- Destructive actions still need stronger confirmation unless Hermes core approval logic already covers them.
 
-### `/delete`
+## Prototype setup flow
 
-1. Ask confirmation.
-2. Disable/delete plugin config for the current bot/profile/chat.
-3. Remove pending setup state.
-4. Send confirmation with uninstall instructions if needed.
+The intended `/setup` flow is:
 
-## Architecture
+1. Detect the Telegram/Hermes context.
+2. Show the default reaction list.
+3. Ask the user what each reaction should mean.
+4. Store the raw meanings temporarily.
+5. Ask Hermes/LLM to turn those meanings into clear, safe command prompts.
+6. Show the final mapping back to the user.
+7. Require explicit approval before enabling it.
+8. Save the plugin config and send a small greeting.
+
+The intended `/delete` flow is:
+
+1. Ask for confirmation.
+2. Disable or delete the mapping for the current bot/profile/chat.
+3. Clear pending setup state.
+4. Confirm that the shortcut mapping was removed.
+
+## Architecture sketch
 
 ```text
-Telegram Update: MessageReactionUpdated
-  -> Telegram gateway reaction bridge/hook
-  -> reaction plugin router
-  -> config lookup: chat/profile/user mapping
-  -> target message lookup: bot message id -> session/message metadata
+Telegram MessageReactionUpdated event
+  -> Hermes Telegram gateway bridge
+  -> reaction command router
+  -> config lookup for chat/profile/user
+  -> target message lookup
   -> action resolver
-  -> inject scoped user instruction OR approve exact pending action
-  -> send acknowledgment
+  -> scoped user instruction or exact pending-action approval
+  -> short acknowledgment
 ```
 
 ## Repository shape
@@ -81,35 +88,37 @@ hermes-telegram-reaction-commands/
   plugin.yaml
   reaction_commands/
     __init__.py
-    constants.py
-    config_store.py
-    setup_flow.py
-    reaction_router.py
-    command_flow.py
     ascii_greeting.py
+    command_flow.py
+    config_store.py
+    constants.py
+    reaction_router.py
+    setup_flow.py
   tests/
     test_core.py
 ```
 
 ## Local development
 
+Run tests with:
+
 ```bash
 python -m pytest -q
 ```
 
-Expected result:
+Current expected result:
 
 ```text
-10 passed
+12 passed
 ```
 
-## Future install target
+## Possible install shape later
 
-Once Hermes exposes a plugin hook for Telegram reaction events, intended install shape could be:
+If Hermes exposes the needed Telegram reaction plugin hook, installation could eventually look like this:
 
 ```bash
 hermes plugins install https://github.com/Visiterius/hermes-telegram-reaction-commands
 hermes gateway restart
 ```
 
-For now, treat this repository as an independent prototype/reference implementation.
+For now, this repo is just the standalone prototype for the idea.
