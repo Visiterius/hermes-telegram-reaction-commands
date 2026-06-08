@@ -2,7 +2,6 @@
 
 Independent community plugin/prototype for mapping Telegram message reactions to scoped Hermes Agent commands.
 
-This repository is **not an official Hermes Agent repository** and is **not a pull request against Hermes core**. It is a standalone experiment/prototype that can be shared, tested, and improved separately.
 
 ## What it does
 
